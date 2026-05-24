@@ -1,0 +1,16 @@
+{
+  "block.aero_fe_thrusters.electric_thruster": "Electric Thruster",
+  "itemGroup.aero_fe_thrusters.main": "Aero FE Thrusters",
+  "aero_fe_thrusters.tooltip.max_thrust": "Max thrust: %s pN",
+  "aero_fe_thrusters.tooltip.redstone_mode": "Redstone mode: %s",
+  "aero_fe_thrusters.tooltip.current_thrust": "Current thrust: %s pN",
+  "aero_fe_thrusters.tooltip.energy": "Energy: %s / %s FE",
+  "aero_fe_thrusters.tooltip.cost": "Fuel rate: %s FE per pN/t",
+  "aero_fe_thrusters.ui.max_thrust": "Max thrust",
+  "aero_fe_thrusters.ui.invalid_thrust": "Enter 0-4096",
+  "aero_fe_thrusters.redstone_mode.ignore": "Ignore redstone signal",
+  "aero_fe_thrusters.redstone_mode.work_when_powered": "Work when receiving redstone",
+  "aero_fe_thrusters.redstone_mode.stop_when_powered": "Stop when receiving redstone",
+  "aero_fe_thrusters.redstone_mode.proportional": "Proportional to signal",
+  "aero_fe_thrusters.redstone_mode.inverse": "Inverse to signal"
+}

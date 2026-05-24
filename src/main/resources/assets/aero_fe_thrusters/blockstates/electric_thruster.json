@@ -1,0 +1,50 @@
+{
+  "variants": {
+    "facing=down,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster",
+      "x": 90
+    },
+    "facing=down,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on",
+      "x": 90
+    },
+    "facing=up,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster",
+      "x": 270
+    },
+    "facing=up,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on",
+      "x": 270
+    },
+    "facing=north,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster"
+    },
+    "facing=north,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on"
+    },
+    "facing=south,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster",
+      "y": 180
+    },
+    "facing=south,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on",
+      "y": 180
+    },
+    "facing=west,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster",
+      "y": 270
+    },
+    "facing=west,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on",
+      "y": 270
+    },
+    "facing=east,lit=false": {
+      "model": "aero_fe_thrusters:block/electric_thruster",
+      "y": 90
+    },
+    "facing=east,lit=true": {
+      "model": "aero_fe_thrusters:block/electric_thruster_on",
+      "y": 90
+    }
+  }
+}

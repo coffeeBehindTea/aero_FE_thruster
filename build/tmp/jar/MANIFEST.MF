@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Specification-Title: aero_fe_thrusters
+Specification-Vendor: dada2
+Specification-Version: 1
+Implementation-Title: aero-fe-thrusters
+Implementation-Version: 0.1.0
+Implementation-Vendor: dada2
+Implementation-Timestamp: 2026-05-24T11:19:50+0100
+

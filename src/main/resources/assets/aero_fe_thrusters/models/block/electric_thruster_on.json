@@ -1,0 +1,9 @@
+{
+  "parent": "aero_fe_thrusters:block/electric_thruster",
+  "textures": {
+    "particle": "minecraft:block/magenta_glazed_terracotta",
+    "side": "minecraft:block/magenta_glazed_terracotta",
+    "nozzle": "minecraft:block/redstone_lamp_on",
+    "back": "minecraft:block/copper_block"
+  }
+}

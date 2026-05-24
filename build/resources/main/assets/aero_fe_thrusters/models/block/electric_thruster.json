@@ -1,0 +1,23 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "particle": "minecraft:block/magenta_glazed_terracotta",
+    "side": "minecraft:block/magenta_glazed_terracotta",
+    "nozzle": "minecraft:block/redstone_lamp",
+    "back": "minecraft:block/copper_block"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "down": { "uv": [0, 0, 16, 16], "texture": "#side", "cullface": "down", "rotation": 180 },
+        "up": { "uv": [0, 0, 16, 16], "texture": "#side", "cullface": "up" },
+        "north": { "uv": [0, 0, 16, 16], "texture": "#nozzle", "cullface": "north" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#back", "cullface": "south" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#side", "cullface": "west", "rotation": 270 },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#side", "cullface": "east", "rotation": 90 }
+      }
+    }
+  ]
+}

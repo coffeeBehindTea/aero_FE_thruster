@@ -1,0 +1,16 @@
+{
+  "block.aero_fe_thrusters.electric_thruster": "电力推进器",
+  "itemGroup.aero_fe_thrusters.main": "航空 FE 推进器",
+  "aero_fe_thrusters.tooltip.max_thrust": "最大推力：%s pN",
+  "aero_fe_thrusters.tooltip.redstone_mode": "红石模式：%s",
+  "aero_fe_thrusters.tooltip.current_thrust": "当前推力：%s pN",
+  "aero_fe_thrusters.tooltip.energy": "能量：%s / %s FE",
+  "aero_fe_thrusters.tooltip.cost": "燃料消耗：每 pN/t %s FE",
+  "aero_fe_thrusters.ui.max_thrust": "最大推力",
+  "aero_fe_thrusters.ui.invalid_thrust": "请输入 0-4096",
+  "aero_fe_thrusters.redstone_mode.ignore": "忽略红石信号",
+  "aero_fe_thrusters.redstone_mode.work_when_powered": "收到红石信号时工作",
+  "aero_fe_thrusters.redstone_mode.stop_when_powered": "收到红石信号时停止",
+  "aero_fe_thrusters.redstone_mode.proportional": "与信号成正比",
+  "aero_fe_thrusters.redstone_mode.inverse": "与信号成反比"
+}
