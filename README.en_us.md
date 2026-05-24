@@ -1,5 +1,7 @@
 # Aero FE Thrusters
 
+[简体中文](README.md) | [English](README.en_us.md)
+
 Aero FE Thrusters is a Create: Aeronautics / Sable addon. It adds an FE-powered Electric Thruster which applies propulsion force to Aeronautics physics structures. The thruster can be configured with an in-game UI, controlled by redstone, integrated with CC: Tweaked computers for thrust control and physics telemetry, and connected to Applied Energistics 2 ME cables for AE energy exchange.
 
 ## Requirements
