@@ -1,5 +1,6 @@
 package dev.dada2.aerofethrusters;
 
+import dev.dada2.aerofethrusters.config.AftConfigs;
 import dev.dada2.aerofethrusters.registry.AftBlockEntityTypes;
 import dev.dada2.aerofethrusters.registry.AftBlocks;
 import dev.dada2.aerofethrusters.registry.AftCapabilities;
@@ -8,6 +9,7 @@ import dev.dada2.aerofethrusters.registry.AftItems;
 import dev.dada2.aerofethrusters.registry.AftMenus;
 import dev.dada2.aerofethrusters.registry.AftPackets;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 
 /**
@@ -28,6 +30,8 @@ public class AeroFeThrusters {
      * @param modEventBus NeoForge MOD event bus for this mod container
      */
     public AeroFeThrusters(final IEventBus modEventBus) {
+        AftConfigs.register(ModLoadingContext.get().getActiveContainer());
+
         AftBlocks.register(modEventBus);
         AftItems.register(modEventBus);
         AftBlockEntityTypes.register(modEventBus);

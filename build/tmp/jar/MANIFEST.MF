@@ -5,5 +5,5 @@ Specification-Version: 1
 Implementation-Title: aero-fe-thrusters
 Implementation-Version: 0.1.0
 Implementation-Vendor: dada2
-Implementation-Timestamp: 2026-05-24T15:31:34+0100
+Implementation-Timestamp: 2026-05-24T16:00:13+0100
 

@@ -28,8 +28,9 @@ The Electric Thruster is an FE-powered thruster for Create: Aeronautics physics 
 
 Base values:
 
-- Configurable max thrust: `0` to `4096` pN
+- Configurable max thrust: `0` to the server-configured cap, default `4096` pN
 - Default max thrust: `256` pN
+- Thrust precision: up to `4` decimal places
 - Internal energy capacity: `1,000,000` FE
 - Max receive rate: `64,000` FE/t
 - Energy cost: `2 FE` per `1 pN` of thrust per tick
@@ -54,9 +55,18 @@ Materials:
 1. Place the Electric Thruster on a Create: Aeronautics / Sable physics structure.
 2. Provide FE power to the thruster. If AE2 is installed, ME cables can connect to any side for AE/FE energy exchange.
 3. Right-click the thruster with an empty hand to open the configuration UI.
-4. Set the max thrust in the center input box. Valid range: `0 <= thrust <= 4096`.
+4. Set the max thrust in the center input box. Valid range: `0 <= thrust <= configured cap`.
 5. Use the slider below the input box to select the redstone control mode.
 6. Right-click with the Create wrench to rotate the thruster like a normal Create block.
+
+## Create Config
+
+Open Create's in-game config screen and find the Aero FE Thrusters server config.
+
+- `thruster.maxConfigurableThrust`: upper limit for the per-thruster UI and CC:T values.
+- Default: `4096`
+- Allowed config range: `1` to `1.0E7`
+- Per-thruster values support up to `4` decimal places.
 
 ## Applied Energistics 2 Energy Compatibility
 
@@ -135,8 +145,8 @@ Force telemetry is provided by Sable. Calling `enableForceTelemetry()`, `getForc
 
 | Function | Description | Usage | Example output |
 | --- | --- | --- | --- |
-| `setThrust(thrust)` | Sets configured max thrust. Alias of `setMaxThrust`. Range: `0..4096`. | `t.setThrust(512)` | `512` |
-| `setMaxThrust(thrust)` | Sets configured max thrust. Throws a Lua error outside `0..4096`. | `t.setMaxThrust(1024)` | `1024` |
+| `setThrust(thrust)` | Sets configured max thrust. Alias of `setMaxThrust`. Range: `0..configured cap`, up to 4 decimals. | `t.setThrust(512.125)` | `512.125` |
+| `setMaxThrust(thrust)` | Sets configured max thrust. Throws a Lua error outside the configured cap. | `t.setMaxThrust(1024.0625)` | `1024.0625` |
 | `getThrust()` | Returns configured max thrust. Alias of `getMaxThrust`. | `t.getThrust()` | `1024` |
 | `getMaxThrust()` | Returns configured max thrust. | `t.getMaxThrust()` | `1024` |
 | `getCurrentThrust()` | Returns current actual output thrust, affected by redstone and FE availability. | `t.getCurrentThrust()` | `768.0` |

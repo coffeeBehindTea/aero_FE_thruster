@@ -4,6 +4,7 @@ import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import dev.dada2.aerofethrusters.compat.appliedenergistics.AftAppliedEnergisticsCompat;
+import dev.dada2.aerofethrusters.config.AftConfigs;
 import dev.dada2.aerofethrusters.registry.AftBlockEntityTypes;
 import dev.ryanhcode.sable.Sable;
 import dev.ryanhcode.sable.api.block.propeller.BlockEntityPropeller;
@@ -44,10 +45,8 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
     public static final int ENERGY_CAPACITY = 1_000_000;
     /** Maximum FE accepted by one insertion call. */
     public static final int MAX_RECEIVE = 64_000;
-    /** Highest configurable thrust in pN. */
-    public static final int MAX_THRUST = 4096;
     /** Default configured thrust for newly placed thrusters. */
-    public static final int DEFAULT_THRUST = 256;
+    public static final double DEFAULT_THRUST = 256;
     /** FE consumed per pN of target thrust per game tick. */
     public static final int FE_PER_THRUST_PER_TICK = 2;
     /** Legacy scroll-wheel step used when loading old saves. */
@@ -55,7 +54,7 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
 
     private final ThrusterEnergyStorage energy = new ThrusterEnergyStorage(
             ENERGY_CAPACITY, MAX_RECEIVE, this::onEnergyChanged);
-    private int maxThrust = DEFAULT_THRUST;
+    private double maxThrust = DEFAULT_THRUST;
     private RedstoneControlMode redstoneMode = RedstoneControlMode.IGNORE;
     private double currentThrust;
     private double energyCostRemainder;
@@ -146,8 +145,14 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
 
         final double tickScale = Math.max(0, timeStep * 20.0);
         final double exactCost = targetThrust * FE_PER_THRUST_PER_TICK * tickScale + this.energyCostRemainder;
-        final int cost = (int) Math.floor(exactCost);
-        this.energyCostRemainder = exactCost - cost;
+        final int cost;
+        if (exactCost >= Integer.MAX_VALUE) {
+            cost = Integer.MAX_VALUE;
+            this.energyCostRemainder = 0;
+        } else {
+            cost = (int) Math.floor(exactCost);
+            this.energyCostRemainder = exactCost - cost;
+        }
 
         if (cost <= 0) {
             this.currentThrust = this.energy.getEnergyStored() > 0 ? targetThrust : 0;
@@ -166,7 +171,7 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
      * @return thrust requested before FE shortage is applied
      */
     public double getTargetThrustForDisplay() {
-        return this.redstoneMode.apply(this.maxThrust, this.getRedstoneSignal());
+        return this.redstoneMode.apply(this.getConfiguredMaxThrust(), this.getRedstoneSignal());
     }
 
     /**
@@ -236,8 +241,8 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
     }
 
     /** @return configured maximum thrust in pN */
-    public int getConfiguredMaxThrust() {
-        return this.maxThrust;
+    public double getConfiguredMaxThrust() {
+        return AftConfigs.clampConfiguredThrust(this.maxThrust);
     }
 
     /** @return current redstone control mode */
@@ -268,11 +273,11 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
     /**
      * Applies settings from the UI or CC:T peripheral.
      *
-     * @param maxThrust requested max thrust, clamped to {@code 0..MAX_THRUST}
+     * @param maxThrust requested max thrust, clamped to the server-configured cap
      * @param redstoneMode requested redstone mode, or {@code null} for ignore mode
      */
-    public void applySettings(final int maxThrust, final RedstoneControlMode redstoneMode) {
-        this.maxThrust = Mth.clamp(maxThrust, 0, MAX_THRUST);
+    public void applySettings(final double maxThrust, final RedstoneControlMode redstoneMode) {
+        this.maxThrust = AftConfigs.clampConfiguredThrust(maxThrust);
         this.redstoneMode = redstoneMode == null ? RedstoneControlMode.IGNORE : redstoneMode;
         this.setChanged();
         this.sendData();
@@ -294,8 +299,9 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
      */
     public void writeMenuData(final RegistryFriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.worldPosition);
-        buffer.writeVarInt(this.maxThrust);
+        buffer.writeDouble(this.getConfiguredMaxThrust());
         buffer.writeVarInt(this.redstoneMode.id());
+        buffer.writeDouble(AftConfigs.maxConfigurableThrust());
     }
 
     /** @return localized title displayed by the configuration menu */
@@ -396,7 +402,7 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
     protected void write(final CompoundTag tag, final HolderLookup.Provider registries, final boolean clientPacket) {
         super.write(tag, registries, clientPacket);
         tag.putInt("Energy", this.energy.getEnergyStored());
-        tag.putInt("MaxThrust", this.maxThrust);
+        tag.putDouble("MaxThrust", this.getConfiguredMaxThrust());
         tag.putInt("RedstoneMode", this.redstoneMode.id());
         tag.putDouble("CurrentThrust", this.currentThrust);
         tag.putDouble("EnergyCostRemainder", this.energyCostRemainder);
@@ -514,18 +520,18 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
      * Reads max thrust from current or legacy save keys.
      *
      * @param tag block entity save data
-     * @return max thrust clamped to the supported range
+     * @return max thrust clamped to the current configured range
      */
-    private static int readMaxThrust(final CompoundTag tag) {
+    private static double readMaxThrust(final CompoundTag tag) {
         if (tag.contains("MaxThrust")) {
-            return Mth.clamp(tag.getInt("MaxThrust"), 0, MAX_THRUST);
+            return AftConfigs.clampConfiguredThrust(tag.getDouble("MaxThrust"));
         }
 
         if (tag.contains("ScrollValue")) {
             final int oldStep = tag.contains("ThrustStep")
                     ? Mth.clamp(tag.getInt("ThrustStep"), 1, 128)
                     : OLD_DEFAULT_THRUST_STEP;
-            return Mth.clamp(tag.getInt("ScrollValue") * oldStep, 0, MAX_THRUST);
+            return AftConfigs.clampConfiguredThrust(tag.getInt("ScrollValue") * oldStep);
         }
 
         return DEFAULT_THRUST;
@@ -544,11 +550,11 @@ public class ElectricThrusterBlockEntity extends SmartBlockEntity
         tooltip.add(Component.translatable("block.aero_fe_thrusters.electric_thruster")
                 .withStyle(ChatFormatting.WHITE));
         tooltip.add(Component.translatable("aero_fe_thrusters.tooltip.max_thrust",
-                this.getConfiguredMaxThrust()).withStyle(ChatFormatting.GRAY));
+                AftConfigs.formatThrust(this.getConfiguredMaxThrust())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("aero_fe_thrusters.tooltip.redstone_mode",
                 this.redstoneMode.translation()).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("aero_fe_thrusters.tooltip.current_thrust",
-                String.format("%.1f", this.getCurrentThrustForDisplay())).withStyle(ChatFormatting.GRAY));
+                AftConfigs.formatThrust(this.getCurrentThrustForDisplay())).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("aero_fe_thrusters.tooltip.energy",
                 this.energy.getEnergyStored(), this.energy.getMaxEnergyStored()).withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("aero_fe_thrusters.tooltip.cost",

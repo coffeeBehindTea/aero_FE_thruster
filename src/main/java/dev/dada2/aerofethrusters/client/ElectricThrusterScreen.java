@@ -1,6 +1,6 @@
 package dev.dada2.aerofethrusters.client;
 
-import dev.dada2.aerofethrusters.content.ElectricThrusterBlockEntity;
+import dev.dada2.aerofethrusters.config.AftConfigs;
 import dev.dada2.aerofethrusters.content.ElectricThrusterMenu;
 import dev.dada2.aerofethrusters.content.RedstoneControlMode;
 import dev.dada2.aerofethrusters.network.UpdateThrusterSettingsPacket;
@@ -26,11 +26,12 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
     private static final int TEXT_COLOR = 0xffe8edf2;
     private static final int MUTED_TEXT_COLOR = 0xff9ca8b8;
     private static final int ERROR_TEXT_COLOR = 0xffff8a7a;
-    private static final int SLIDER_WIDTH = 200;
+    private static final int SLIDER_WIDTH = 240;
     private EditBox thrustBox;
     private boolean updatingBox;
     private boolean draggingSlider;
-    private int maxThrust;
+    private double maxThrust;
+    private double maxAllowedThrust;
     private RedstoneControlMode redstoneMode;
 
     /**
@@ -43,29 +44,31 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
     public ElectricThrusterScreen(final ElectricThrusterMenu menu, final Inventory inventory,
                                   final Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 260;
+        this.imageWidth = 320;
         this.imageHeight = 148;
         this.maxThrust = menu.maxThrust();
+        this.maxAllowedThrust = menu.maxAllowedThrust();
         this.redstoneMode = menu.redstoneMode();
     }
 
     /**
      * Builds widgets and loads current values from the menu.
      *
-     * <p>The thrust input accepts only digits and clamps to the supported range
+     * <p>The thrust input accepts digits plus one decimal point and clamps to the supported range
      * through {@link #onThrustEdited(String)}.</p>
      */
     @Override
     protected void init() {
         super.init();
         this.maxThrust = this.menu.maxThrust();
+        this.maxAllowedThrust = this.menu.maxAllowedThrust();
         this.redstoneMode = this.menu.redstoneMode();
 
-        this.thrustBox = new EditBox(this.font, this.leftPos + this.imageWidth / 2 - 36,
-                this.topPos + 36, 72, 20, Component.translatable("aero_fe_thrusters.ui.max_thrust"));
-        this.thrustBox.setMaxLength(4);
-        this.thrustBox.setFilter(value -> value.isEmpty() || value.chars().allMatch(Character::isDigit));
-        this.thrustBox.setValue(Integer.toString(this.maxThrust));
+        this.thrustBox = new EditBox(this.font, this.leftPos + this.imageWidth / 2 - 55,
+                this.topPos + 36, 110, 20, Component.translatable("aero_fe_thrusters.ui.max_thrust"));
+        this.thrustBox.setMaxLength(13);
+        this.thrustBox.setFilter(ElectricThrusterScreen::isPartialDecimalInput);
+        this.thrustBox.setValue(AftConfigs.formatThrust(this.maxThrust));
         this.thrustBox.setResponder(this::onThrustEdited);
         this.addRenderableWidget(this.thrustBox);
         this.setInitialFocus(this.thrustBox);
@@ -81,17 +84,17 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
             return;
         }
 
-        final int parsed;
+        final double parsed;
         try {
-            parsed = Integer.parseInt(value);
+            parsed = Double.parseDouble(value);
         } catch (final NumberFormatException ignored) {
             return;
         }
 
-        final int clamped = Mth.clamp(parsed, 0, ElectricThrusterBlockEntity.MAX_THRUST);
+        final double clamped = AftConfigs.roundThrust(Math.max(0, Math.min(this.maxAllowedThrust, parsed)));
         if (clamped != parsed) {
             this.updatingBox = true;
-            this.thrustBox.setValue(Integer.toString(clamped));
+            this.thrustBox.setValue(AftConfigs.formatThrust(clamped));
             this.updatingBox = false;
         }
 
@@ -101,11 +104,11 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
     /**
      * Applies UI state locally and sends it to the server.
      *
-     * @param maxThrust requested max thrust
+     * @param maxThrust requested max thrust in pN
      * @param mode requested redstone mode
      */
-    private void updateSettings(final int maxThrust, final RedstoneControlMode mode) {
-        this.maxThrust = Mth.clamp(maxThrust, 0, ElectricThrusterBlockEntity.MAX_THRUST);
+    private void updateSettings(final double maxThrust, final RedstoneControlMode mode) {
+        this.maxThrust = AftConfigs.roundThrust(Math.max(0, Math.min(this.maxAllowedThrust, maxThrust)));
         this.redstoneMode = mode;
         this.menu.applyClientSettings(this.maxThrust, this.redstoneMode);
         PacketDistributor.sendToServer(new UpdateThrusterSettingsPacket(
@@ -145,8 +148,9 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
         graphics.fill(x + this.imageWidth - 1, y, x + this.imageWidth, y + this.imageHeight, PANEL_BORDER);
 
         graphics.drawCenteredString(this.font, this.title, x + this.imageWidth / 2, y + 12, TEXT_COLOR);
-        graphics.drawString(this.font, "0 <=", x + this.imageWidth / 2 - 76, y + 42, MUTED_TEXT_COLOR, false);
-        graphics.drawString(this.font, "<= 4096", x + this.imageWidth / 2 + 42, y + 42, MUTED_TEXT_COLOR, false);
+        graphics.drawString(this.font, "0 <=", x + this.imageWidth / 2 - 102, y + 42, MUTED_TEXT_COLOR, false);
+        graphics.drawString(this.font, "<= " + AftConfigs.formatThrust(this.maxAllowedThrust),
+                x + this.imageWidth / 2 + 66, y + 42, MUTED_TEXT_COLOR, false);
 
         final int sliderX = this.sliderX();
         final int sliderY = this.sliderY();
@@ -281,7 +285,7 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
     /**
      * Validates the current text box value.
      *
-     * @return true when the value is an integer in the supported thrust range
+     * @return true when the value is a decimal in the supported thrust range
      */
     private boolean isThrustBoxValid() {
         final String value = this.thrustBox.getValue();
@@ -290,10 +294,41 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
         }
 
         try {
-            final int parsed = Integer.parseInt(value);
-            return parsed >= 0 && parsed <= ElectricThrusterBlockEntity.MAX_THRUST;
+            final double parsed = Double.parseDouble(value);
+            return parsed >= 0 && parsed <= this.maxAllowedThrust && isPartialDecimalInput(value);
         } catch (final NumberFormatException ignored) {
             return false;
         }
+    }
+
+    /**
+     * Allows editing a non-negative decimal with up to four digits after the decimal point.
+     *
+     * @param value text box candidate value
+     * @return true when the text is a valid partial decimal input
+     */
+    private static boolean isPartialDecimalInput(final String value) {
+        if (value.isEmpty()) {
+            return true;
+        }
+
+        int decimalPoints = 0;
+        int decimalDigits = 0;
+        for (int i = 0; i < value.length(); i++) {
+            final char character = value.charAt(i);
+            if (character == '.') {
+                if (++decimalPoints > 1) {
+                    return false;
+                }
+                continue;
+            }
+            if (!Character.isDigit(character)) {
+                return false;
+            }
+            if (decimalPoints > 0 && ++decimalDigits > 4) {
+                return false;
+            }
+        }
+        return true;
     }
 }

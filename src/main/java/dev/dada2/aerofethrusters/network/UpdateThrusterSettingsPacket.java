@@ -15,10 +15,10 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * Client-to-server packet sent when the thruster configuration UI changes.
  *
  * @param pos thruster block position echoed by the client
- * @param maxThrust requested max thrust
+ * @param maxThrust requested max thrust in pN, rounded server-side to 4 decimals
  * @param redstoneMode requested {@link RedstoneControlMode#id()} value
  */
-public record UpdateThrusterSettingsPacket(BlockPos pos, int maxThrust, int redstoneMode)
+public record UpdateThrusterSettingsPacket(BlockPos pos, double maxThrust, int redstoneMode)
         implements CustomPacketPayload {
     public static final Type<UpdateThrusterSettingsPacket> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(AeroFeThrusters.MOD_ID, "update_thruster_settings"));
@@ -32,7 +32,7 @@ public record UpdateThrusterSettingsPacket(BlockPos pos, int maxThrust, int reds
      * @return decoded packet
      */
     private static UpdateThrusterSettingsPacket read(final RegistryFriendlyByteBuf buffer) {
-        return new UpdateThrusterSettingsPacket(buffer.readBlockPos(), buffer.readVarInt(), buffer.readVarInt());
+        return new UpdateThrusterSettingsPacket(buffer.readBlockPos(), buffer.readDouble(), buffer.readVarInt());
     }
 
     /**
@@ -42,7 +42,7 @@ public record UpdateThrusterSettingsPacket(BlockPos pos, int maxThrust, int reds
      */
     private void write(final RegistryFriendlyByteBuf buffer) {
         buffer.writeBlockPos(this.pos);
-        buffer.writeVarInt(this.maxThrust);
+        buffer.writeDouble(this.maxThrust);
         buffer.writeVarInt(this.redstoneMode);
     }
 

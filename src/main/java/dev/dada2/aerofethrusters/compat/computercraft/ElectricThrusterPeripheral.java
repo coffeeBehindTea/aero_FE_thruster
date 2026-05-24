@@ -3,6 +3,7 @@ package dev.dada2.aerofethrusters.compat.computercraft;
 import dan200.computercraft.api.lua.LuaException;
 import dan200.computercraft.api.lua.LuaFunction;
 import dan200.computercraft.api.peripheral.IPeripheral;
+import dev.dada2.aerofethrusters.config.AftConfigs;
 import dev.dada2.aerofethrusters.content.ElectricThrusterBlockEntity;
 import dev.dada2.aerofethrusters.content.RedstoneControlMode;
 import dev.ryanhcode.sable.Sable;
@@ -65,24 +66,24 @@ public class ElectricThrusterPeripheral implements IPeripheral {
     /**
      * Sets configured max thrust.
      *
-     * @param thrust requested max thrust in pN
+     * @param thrust requested max thrust in pN, with up to 4 decimal places
      * @return applied max thrust
-     * @throws LuaException when thrust is outside {@code 0..4096}
+     * @throws LuaException when thrust is outside the configured range
      */
     @LuaFunction(mainThread = true)
-    public final int setThrust(final int thrust) throws LuaException {
+    public final double setThrust(final double thrust) throws LuaException {
         return this.setMaxThrust(thrust);
     }
 
     /**
      * Sets configured max thrust while preserving the redstone mode.
      *
-     * @param thrust requested max thrust in pN
+     * @param thrust requested max thrust in pN, with up to 4 decimal places
      * @return applied max thrust
-     * @throws LuaException when thrust is outside {@code 0..4096}
+     * @throws LuaException when thrust is outside the configured range
      */
     @LuaFunction(mainThread = true)
-    public final int setMaxThrust(final int thrust) throws LuaException {
+    public final double setMaxThrust(final double thrust) throws LuaException {
         this.validateThrust(thrust);
         this.thruster.applySettings(thrust, this.thruster.getRedstoneMode());
         return this.thruster.getConfiguredMaxThrust();
@@ -90,13 +91,13 @@ public class ElectricThrusterPeripheral implements IPeripheral {
 
     /** @return configured max thrust in pN */
     @LuaFunction(mainThread = true)
-    public final int getThrust() {
+    public final double getThrust() {
         return this.thruster.getConfiguredMaxThrust();
     }
 
     /** @return configured max thrust in pN */
     @LuaFunction(mainThread = true)
-    public final int getMaxThrust() {
+    public final double getMaxThrust() {
         return this.thruster.getConfiguredMaxThrust();
     }
 
@@ -354,12 +355,13 @@ public class ElectricThrusterPeripheral implements IPeripheral {
     /**
      * Validates CC:T thrust input.
      *
-     * @param thrust requested max thrust
+     * @param thrust requested max thrust in pN
      * @throws LuaException when thrust is outside the supported range
      */
-    private void validateThrust(final int thrust) throws LuaException {
-        if (thrust < 0 || thrust > ElectricThrusterBlockEntity.MAX_THRUST) {
-            throw new LuaException("thrust must be between 0 and " + ElectricThrusterBlockEntity.MAX_THRUST);
+    private void validateThrust(final double thrust) throws LuaException {
+        if (!AftConfigs.isAllowedConfiguredThrust(thrust)) {
+            throw new LuaException("thrust must be between 0 and "
+                    + AftConfigs.formatThrust(AftConfigs.maxConfigurableThrust()));
         }
     }
 

@@ -2,6 +2,7 @@ package dev.dada2.aerofethrusters.content;
 
 import dev.dada2.aerofethrusters.registry.AftBlocks;
 import dev.dada2.aerofethrusters.registry.AftMenus;
+import dev.dada2.aerofethrusters.config.AftConfigs;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -21,7 +22,8 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
     private final ContainerLevelAccess access;
     private final BlockPos blockPos;
     private final ElectricThrusterBlockEntity thruster;
-    private int maxThrust;
+    private double maxThrust;
+    private double maxAllowedThrust;
     private RedstoneControlMode redstoneMode;
 
     /**
@@ -33,8 +35,8 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
      */
     public ElectricThrusterMenu(final int containerId, final Inventory inventory,
                                 final RegistryFriendlyByteBuf buffer) {
-        this(containerId, inventory, buffer.readBlockPos(), buffer.readVarInt(),
-                RedstoneControlMode.byId(buffer.readVarInt()));
+        this(containerId, inventory, buffer.readBlockPos(), buffer.readDouble(),
+                RedstoneControlMode.byId(buffer.readVarInt()), buffer.readDouble());
     }
 
     /**
@@ -43,17 +45,20 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
      * @param containerId vanilla container id
      * @param inventory player inventory
      * @param blockPos thruster position
-     * @param maxThrust initial max thrust
+     * @param maxThrust initial max thrust in pN
      * @param redstoneMode initial redstone mode
+     * @param maxAllowedThrust server-configured upper limit in pN
      */
     public ElectricThrusterMenu(final int containerId, final Inventory inventory,
-                                final BlockPos blockPos, final int maxThrust,
-                                final RedstoneControlMode redstoneMode) {
+                                final BlockPos blockPos, final double maxThrust,
+                                final RedstoneControlMode redstoneMode,
+                                final double maxAllowedThrust) {
         super(AftMenus.ELECTRIC_THRUSTER.get(), containerId);
         this.access = ContainerLevelAccess.create(inventory.player.level(), blockPos);
         this.blockPos = blockPos;
         this.thruster = null;
         this.maxThrust = maxThrust;
+        this.maxAllowedThrust = maxAllowedThrust;
         this.redstoneMode = redstoneMode;
     }
 
@@ -71,6 +76,7 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
         this.blockPos = thruster.getBlockPos();
         this.thruster = thruster;
         this.maxThrust = thruster.getConfiguredMaxThrust();
+        this.maxAllowedThrust = AftConfigs.maxConfigurableThrust();
         this.redstoneMode = thruster.getRedstoneMode();
     }
 
@@ -103,8 +109,13 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
     }
 
     /** @return current menu copy of max thrust */
-    public int maxThrust() {
+    public double maxThrust() {
         return this.maxThrust;
+    }
+
+    /** @return server-configured maximum value accepted by the UI */
+    public double maxAllowedThrust() {
+        return this.maxAllowedThrust;
     }
 
     /** @return current menu copy of redstone mode */
@@ -118,7 +129,7 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
      * @param maxThrust new max thrust shown by the screen
      * @param redstoneMode new redstone mode shown by the screen
      */
-    public void applyClientSettings(final int maxThrust, final RedstoneControlMode redstoneMode) {
+    public void applyClientSettings(final double maxThrust, final RedstoneControlMode redstoneMode) {
         this.maxThrust = maxThrust;
         this.redstoneMode = redstoneMode;
     }
@@ -127,11 +138,11 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
      * Applies a client packet to the server-side block entity if it matches this menu.
      *
      * @param pos position echoed by the client packet
-     * @param maxThrust requested max thrust
+     * @param maxThrust requested max thrust in pN
      * @param redstoneMode requested redstone mode
      * @return true when the settings were applied
      */
-    public boolean applyServerSettings(final BlockPos pos, final int maxThrust,
+    public boolean applyServerSettings(final BlockPos pos, final double maxThrust,
                                        final RedstoneControlMode redstoneMode) {
         if (!this.blockPos.equals(pos) || this.thruster == null || this.thruster.isRemoved()) {
             return false;
@@ -139,6 +150,7 @@ public class ElectricThrusterMenu extends AbstractContainerMenu {
 
         this.thruster.applySettings(maxThrust, redstoneMode);
         this.maxThrust = this.thruster.getConfiguredMaxThrust();
+        this.maxAllowedThrust = AftConfigs.maxConfigurableThrust();
         this.redstoneMode = this.thruster.getRedstoneMode();
         return true;
     }

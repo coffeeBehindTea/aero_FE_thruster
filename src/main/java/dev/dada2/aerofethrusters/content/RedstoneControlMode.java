@@ -13,35 +13,35 @@ public enum RedstoneControlMode {
     /** Ignores redstone and always requests the configured max thrust. */
     IGNORE(0, "ignore", "aero_fe_thrusters.redstone_mode.ignore") {
         @Override
-        public double apply(final int maxThrust, final int signal) {
+        public double apply(final double maxThrust, final int signal) {
             return maxThrust;
         }
     },
     /** Requests thrust only while redstone signal is present. */
     WORK_WHEN_POWERED(1, "work_when_powered", "aero_fe_thrusters.redstone_mode.work_when_powered") {
         @Override
-        public double apply(final int maxThrust, final int signal) {
+        public double apply(final double maxThrust, final int signal) {
             return signal > 0 ? maxThrust : 0;
         }
     },
     /** Requests thrust unless redstone signal is present. */
     STOP_WHEN_POWERED(2, "stop_when_powered", "aero_fe_thrusters.redstone_mode.stop_when_powered") {
         @Override
-        public double apply(final int maxThrust, final int signal) {
+        public double apply(final double maxThrust, final int signal) {
             return signal > 0 ? 0 : maxThrust;
         }
     },
     /** Scales thrust linearly from 0/15 to 15/15 of max thrust. */
     PROPORTIONAL(3, "proportional", "aero_fe_thrusters.redstone_mode.proportional") {
         @Override
-        public double apply(final int maxThrust, final int signal) {
+        public double apply(final double maxThrust, final int signal) {
             return maxThrust * (Mth.clamp(signal, 0, 15) / 15.0);
         }
     },
     /** Scales thrust inversely from 15/15 to 0/15 of max thrust. */
     INVERSE(4, "inverse", "aero_fe_thrusters.redstone_mode.inverse") {
         @Override
-        public double apply(final int maxThrust, final int signal) {
+        public double apply(final double maxThrust, final int signal) {
             return maxThrust * ((15 - Mth.clamp(signal, 0, 15)) / 15.0);
         }
     };
@@ -60,11 +60,11 @@ public enum RedstoneControlMode {
     /**
      * Converts configured max thrust and redstone signal into target thrust.
      *
-     * @param maxThrust configured max thrust in pN
+     * @param maxThrust configured max thrust in pN, with up to 4 decimal places
      * @param signal neighboring redstone signal strength
      * @return redstone-adjusted target thrust
      */
-    public abstract double apply(int maxThrust, int signal);
+    public abstract double apply(double maxThrust, int signal);
 
     /** @return stable id used by menu packets and save data */
     public int id() {

@@ -28,8 +28,9 @@ Aero FE Thrusters 是一个面向 Create: Aeronautics / Sable 物理结构的机
 
 基础参数：
 
-- 最大可设置推力：`0` 到 `4096` pN
+- 最大可设置推力：`0` 到服务端配置上限，默认 `4096` pN
 - 默认最大推力：`256` pN
+- 推力精度：最多 `4` 位小数
 - 内部能量容量：`1,000,000` FE
 - 最大输入速率：`64,000` FE/t
 - 能量消耗：每 `1 pN` 推力每 tick 消耗 `2 FE`
@@ -54,9 +55,18 @@ C I C
 1. 将电力推进器放在 Create: Aeronautics / Sable 物理结构上。
 2. 给推进器接入 FE 能源；如果安装了 AE2，也可以把 ME 线缆接到推进器任意一面进行 AE/FE 能量交换。
 3. 空手右键推进器打开配置 UI。
-4. 在中间输入框设置最大推力，范围为 `0 <= 推力 <= 4096`。
+4. 在中间输入框设置最大推力，范围为 `0 <= 推力 <= 配置上限`。
 5. 使用下方滑条选择红石控制模式。
 6. 使用 Create 扳手右键推进器时，推进器会像普通机械动力方块一样旋转。
+
+## Create 配置
+
+打开 Create 的游戏内配置界面，找到 Aero FE Thrusters 的服务端配置。
+
+- `thruster.maxConfigurableThrust`：推进器 UI 和 CC:T 可设置推力的上限。
+- 默认值：`4096`
+- 配置允许范围：`1` 到 `1.0E7`
+- 单个推进器的推力值最多支持 `4` 位小数。
 
 ## Applied Energistics 2 能量兼容
 
@@ -135,8 +145,8 @@ thruster is not part of a physics structure
 
 | Function | 作用 | 使用方法 | 示例输出 |
 | --- | --- | --- | --- |
-| `setThrust(thrust)` | 设置最大推力，是 `setMaxThrust` 的别名。范围 `0..4096`。 | `t.setThrust(512)` | `512` |
-| `setMaxThrust(thrust)` | 设置最大推力。范围 `0..4096`，超出范围会抛出 Lua 错误。 | `t.setMaxThrust(1024)` | `1024` |
+| `setThrust(thrust)` | 设置最大推力，是 `setMaxThrust` 的别名。范围 `0..配置上限`，最多 4 位小数。 | `t.setThrust(512.125)` | `512.125` |
+| `setMaxThrust(thrust)` | 设置最大推力。超出配置上限会抛出 Lua 错误。 | `t.setMaxThrust(1024.0625)` | `1024.0625` |
 | `getThrust()` | 读取配置的最大推力，是 `getMaxThrust` 的别名。 | `t.getThrust()` | `1024` |
 | `getMaxThrust()` | 读取配置的最大推力。 | `t.getMaxThrust()` | `1024` |
 | `getCurrentThrust()` | 读取当前实际输出推力。会受到红石模式和 FE 供能影响。 | `t.getCurrentThrust()` | `768.0` |
