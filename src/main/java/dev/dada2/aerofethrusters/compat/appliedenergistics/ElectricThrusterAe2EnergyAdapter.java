@@ -33,6 +33,7 @@ import java.util.EnumSet;
 final class ElectricThrusterAe2EnergyAdapter
         implements IInWorldGridNodeHost, IAEPowerStorage, IGridNodeListener<ElectricThrusterAe2EnergyAdapter> {
     private static final String NODE_TAG_NAME = "ae2_grid_node";
+    private static final double AE_EPSILON = 0.0001;
 
     private final ElectricThrusterBlockEntity thruster;
     private final IManagedGridNode node;
@@ -70,6 +71,7 @@ final class ElectricThrusterAe2EnergyAdapter
             this.node.create(level, this.thruster.getBlockPos());
             this.created = true;
             this.lastKnownEnergy = this.thruster.getEnergyStored();
+            this.emitCurrentPowerCapabilities();
         }
 
         this.chargeFromNetwork();
@@ -108,9 +110,9 @@ final class ElectricThrusterAe2EnergyAdapter
     void onInternalEnergyChanged() {
         final int currentEnergy = this.thruster.getEnergyStored();
         if (currentEnergy > this.lastKnownEnergy) {
-            this.emitPowerStorageChange(PowerEventType.RECEIVE_POWER);
-        } else if (currentEnergy < this.lastKnownEnergy) {
             this.emitPowerStorageChange(PowerEventType.PROVIDE_POWER);
+        } else if (currentEnergy < this.lastKnownEnergy) {
+            this.emitPowerStorageChange(PowerEventType.RECEIVE_POWER);
         }
         this.lastKnownEnergy = currentEnergy;
     }
@@ -225,6 +227,20 @@ final class ElectricThrusterAe2EnergyAdapter
     }
 
     /**
+     * Gives normal AE2 cells priority over the thruster when the network drains energy.
+     *
+     * <p>AE2 extracts from higher-priority providers first. Keeping the thruster
+     * at the lowest priority prevents the active charging pass from selecting
+     * the thruster itself before it has tried other ME energy providers.</p>
+     *
+     * @return lowest AE2 energy priority
+     */
+    @Override
+    public int getPriority() {
+        return Integer.MIN_VALUE;
+    }
+
+    /**
      * Marks the owning block entity dirty when AE2 changes node data.
      *
      * @param owner adapter instance that owns the node
@@ -245,12 +261,25 @@ final class ElectricThrusterAe2EnergyAdapter
     }
 
     /**
+     * Announces the storage state after the node first joins a grid.
+     */
+    private void emitCurrentPowerCapabilities() {
+        if (this.thruster.getEnergyStored() > 0) {
+            this.emitPowerStorageChange(PowerEventType.PROVIDE_POWER);
+        }
+        if (this.thruster.getEnergyStored() < this.thruster.getEnergyCapacity()) {
+            this.emitPowerStorageChange(PowerEventType.RECEIVE_POWER);
+        }
+    }
+
+    /**
      * Pulls AE from the connected ME network into the thruster's FE buffer.
      *
-     * <p>The adapter is also an AE storage, so {@link #chargingFromNetwork}
-     * temporarily disables this same storage as an extraction source. That
-     * avoids spending time moving energy from the thruster back into itself
-     * when AE2 resolves the network-wide extraction request.</p>
+     * <p>The adapter is also an AE storage, so the method first checks the
+     * network's available power excluding this thruster. It then simulates the
+     * pull with this storage disabled before doing the real extraction. This
+     * prevents the thruster from being removed from AE2's provider set by
+     * accidentally trying to charge itself.</p>
      */
     private void chargeFromNetwork() {
         final int missingFe = this.thruster.getEnergyCapacity() - this.thruster.getEnergyStored();
@@ -266,10 +295,29 @@ final class ElectricThrusterAe2EnergyAdapter
 
         this.node.ifPresent(grid -> {
             final IEnergyService energyService = grid.getEnergyService();
-            double extractedAe = 0;
+            final double externalAvailableAe = Math.max(0, energyService.getStoredPower() - this.getAECurrentPower());
+            if (externalAvailableAe <= AE_EPSILON) {
+                return;
+            }
+
+            final double cappedRequestAe = Math.min(requestedAe, externalAvailableAe);
+            final double simulatedAe;
             this.chargingFromNetwork = true;
             try {
-                extractedAe = energyService.extractAEPower(requestedAe, Actionable.MODULATE, PowerMultiplier.ONE);
+                simulatedAe = energyService.extractAEPower(cappedRequestAe, Actionable.SIMULATE, PowerMultiplier.ONE);
+            } finally {
+                this.chargingFromNetwork = false;
+            }
+
+            final double safeRequestAe = Math.min(cappedRequestAe, simulatedAe);
+            if (safeRequestAe <= AE_EPSILON) {
+                return;
+            }
+
+            final double extractedAe;
+            this.chargingFromNetwork = true;
+            try {
+                extractedAe = energyService.extractAEPower(safeRequestAe, Actionable.MODULATE, PowerMultiplier.ONE);
             } finally {
                 this.chargingFromNetwork = false;
             }

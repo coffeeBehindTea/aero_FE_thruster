@@ -23,7 +23,6 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
     private static final int PANEL_COLOR = 0xe0222428;
     private static final int PANEL_BORDER = 0xff8f9aa8;
     private static final int TRACK_COLOR = 0xff38404a;
-    private static final int TRACK_ACTIVE = 0xffd9c26c;
     private static final int TEXT_COLOR = 0xffe8edf2;
     private static final int MUTED_TEXT_COLOR = 0xff9ca8b8;
     private static final int ERROR_TEXT_COLOR = 0xffff8a7a;
@@ -154,8 +153,8 @@ public class ElectricThrusterScreen extends AbstractContainerScreen<ElectricThru
         graphics.fill(sliderX - 10, sliderY - 30, sliderX + SLIDER_WIDTH + 10, sliderY + 42, 0xff1a1d22);
         graphics.drawCenteredString(this.font, this.redstoneMode.translation(),
                 x + this.imageWidth / 2, sliderY - 22, TEXT_COLOR);
+        // Redstone modes are discrete options, so the track has no progress-style filled segment.
         graphics.fill(sliderX, sliderY, sliderX + SLIDER_WIDTH, sliderY + 4, TRACK_COLOR);
-        graphics.fill(sliderX, sliderY, this.knobX(), sliderY + 4, TRACK_ACTIVE);
 
         for (int i = 0; i < RedstoneControlMode.COUNT; i++) {
             final int tickX = sliderX + Math.round(i * (SLIDER_WIDTH / (float) (RedstoneControlMode.COUNT - 1)));
