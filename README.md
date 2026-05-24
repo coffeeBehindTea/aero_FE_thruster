@@ -1,6 +1,6 @@
 # Aero FE Thrusters
 
-[简体中文](README.md) | [English](README.en.md)
+[简体中文](README.md) | [English](README.en_us.md)
 
 Aero FE Thrusters 是一个面向 Create: Aeronautics / Sable 物理结构的机械动力附属模组。它添加了一个电力推进器，使用 FE 能量作为燃料，并把推力施加到航空学物理结构上。推进器可以通过方块 UI 调整最大推力和红石控制模式，也可以通过 CC: Tweaked 电脑进行控制和读取物理遥测信息；安装 Applied Energistics 2 时，还可以接入 ME 线缆进行 AE 能量交换。
 
